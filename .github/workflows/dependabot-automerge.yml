@@ -1,16 +1,24 @@
 name: Dependabot auto-merge
 
-on:
+# workflow_run is safe here: it never checks out or runs PR code, only merges a
+# Dependabot PR from this repo whose CI passed at the exact head SHA. Private
+# repos on GitHub Free can't use `gh pr merge --auto`, so this replaces it.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI]
     types: [completed]
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
+
+concurrency:
+  group: dependabot-automerge-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
 
 jobs:
   merge:
+    permissions:
+      contents: write # squash-merge the PR and delete its branch
+      pull-requests: write # read and merge the Dependabot PR
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success' &&
