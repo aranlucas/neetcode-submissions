@@ -1,0 +1,43 @@
+name: Dependabot auto-merge
+
+# workflow_run is safe here: it never checks out or runs PR code, only merges a
+# Dependabot PR from this repo whose CI passed at the exact head SHA. Private
+# repos on GitHub Free can't use `gh pr merge --auto`, so this replaces it.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: dependabot-automerge-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    permissions:
+      contents: write # squash-merge the PR and delete its branch
+      pull-requests: write # read and merge the Dependabot PR
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge Dependabot PR after CI passes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr=$(gh pr list --head "$HEAD_BRANCH" --state open --json number,author,headRefOid \
+            --jq ".[] | select(.author.login == \"app/dependabot\" and .headRefOid == \"$HEAD_SHA\") | .number")
+          if [ -z "$pr" ]; then
+            echo "No open Dependabot PR at $HEAD_SHA; nothing to merge."
+            exit 0
+          fi
+          gh pr merge "$pr" --squash --delete-branch --match-head-commit "$HEAD_SHA"
