@@ -40,6 +40,36 @@ Python For Beginners/python-hello-world/submission-0.py
 
 ---
 
+## Try a Java submission locally
+
+The checked-in Java files are judge snippets: they each define `Solution`, omit
+imports supplied by the judge, and have no `main` method. Compile or load one
+submission at a time; compiling the entire tree together produces duplicate
+class errors. Different numbered submissions are preserved attempts, not a
+test suite.
+
+JShell supplies the `java.util` imports these snippets use. From the repository
+root, open the submission directory and start JShell:
+
+```sh
+cd 'Data Structures & Algorithms/duplicate-integer'
+jshell
+```
+
+Then enter:
+
+```java
+/open submission-4.java
+new Solution().hasDuplicate(new int[] {1, 2, 1})
+new Solution().hasDuplicate(new int[] {1, 2, 3})
+/exit
+```
+
+The two expressions should print `true` and `false`. Start a fresh JShell
+session when switching submissions. These are manual smoke checks; the current
+CI validates workflow configuration and does not execute the algorithms or
+measure code coverage.
+
 ## Supported languages
 
 | Language | Extension |
