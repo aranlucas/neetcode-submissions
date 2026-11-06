@@ -28,3 +28,12 @@ jobs:
 
       - name: Check patch whitespace
         run: git diff --check HEAD^ HEAD
+
+      - name: Set up Java
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check submission behavior
+        run: python3 scripts/check_submissions.py
